@@ -263,12 +263,12 @@ class PackageDetailScreen extends ConsumerWidget {
                 itemCount: displayPackage.galleryImages.length,
                 separatorBuilder: (context, index) => const SizedBox(width: 12),
                 itemBuilder: (context, index) {
-                  return Container(
+                  return SizedBox(
                     width: 120,
-                    decoration: BoxDecoration(
+                    child: ClipRRect(
                       borderRadius: BorderRadius.circular(16),
-                      image: DecorationImage(
-                        image: NetworkImage(displayPackage.galleryImages[index]),
+                      child: CoverImage(
+                        imageUrl: displayPackage.galleryImages[index],
                         fit: BoxFit.cover,
                       ),
                     ),

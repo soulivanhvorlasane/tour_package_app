@@ -14,6 +14,7 @@ class TourPackage {
   final String startDate;
   final String endDate;
   final String category;
+  final String? videoUrl;
 
   TourPackage({
     required this.id,
@@ -28,6 +29,7 @@ class TourPackage {
     this.startDate = '2026-07-12',
     this.endDate = '2026-07-29',
     this.category = 'Other',
+    this.videoUrl,
   });
 
   factory TourPackage.fromJson(Map<String, dynamic> json) {
@@ -75,7 +77,8 @@ class TourPackage {
       availabilityStatus: json['availability_status'] as String? ?? 'Available',
       startDate: extractedStart,
       endDate: extractedEnd,
-      galleryImages: (json['galleryImages'] as List<dynamic>?)
+      videoUrl: json['video_url'] as String?,
+      galleryImages: (json['gallery'] as List<dynamic>?)
               ?.map((e) => fixHost(e as String))
               .toList() ??
           [
