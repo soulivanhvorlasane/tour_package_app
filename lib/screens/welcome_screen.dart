@@ -14,11 +14,15 @@ class WelcomeScreen extends ConsumerStatefulWidget {
 }
 
 class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
-  int _selectedCategoryIndex = 1;
+  int _selectedCategoryIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final packagesAsyncValue = ref.watch(packagesProvider);
+    final allPackages = packagesAsyncValue.value ?? [];
+    
+    final List<String> categories = ['All', ...allPackages.map((p) => p.category).where((c) => c.isNotEmpty).toSet()];
+    final selectedCategory = _selectedCategoryIndex < categories.length ? categories[_selectedCategoryIndex] : 'All';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
@@ -83,22 +87,38 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         // Categories
                         SizedBox(
                           height: 40,
-                          child: ListView(
+                          child: ListView.separated(
                             scrollDirection: Axis.horizontal,
-                            children: [
-                              _buildCategoryChip(0, 'Yachts', Icons.sailing),
-                              const SizedBox(width: 12),
-                              _buildCategoryChip(1, 'Jetskis', Icons.water_drop),
-                              const SizedBox(width: 12),
-                              _buildCategoryChip(2, 'Beach Activities', Icons.beach_access),
-                            ],
+                            itemCount: categories.length,
+                            separatorBuilder: (context, index) => const SizedBox(width: 12),
+                            itemBuilder: (context, index) {
+                              IconData icon = Icons.category;
+                              final cat = categories[index];
+                              if (cat == 'All') {
+                                icon = Icons.all_inclusive;
+                              } else if (cat.toLowerCase().contains('cultural') || cat.toLowerCase().contains('heritage')) {
+                                icon = Icons.museum;
+                              } else if (cat.toLowerCase().contains('food') || cat.toLowerCase().contains('culinary')) {
+                                icon = Icons.restaurant;
+                              } else if (cat.toLowerCase().contains('wildlife') || cat.toLowerCase().contains('safari')) {
+                                icon = Icons.pets;
+                              } else if (cat.toLowerCase().contains('sports') || cat.toLowerCase().contains('activity')) {
+                                icon = Icons.sports_soccer;
+                              } else if (cat.toLowerCase().contains('yacht') || cat.toLowerCase().contains('boat')) {
+                                icon = Icons.sailing;
+                              } else if (cat.toLowerCase().contains('beach')) {
+                                icon = Icons.beach_access;
+                              }
+                              
+                              return _buildCategoryChip(index, cat, icon);
+                            },
                           ),
                         ),
                         const SizedBox(height: 32),
 
                         // Best Offers Title
                         const Text(
-                          'Best Offers For You',
+                          'Best Package Offers For You',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w800,
@@ -114,22 +134,35 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                 // Package List
                 packagesAsyncValue.when(
                   data: (packages) {
-                    if (packages.isEmpty) {
+                    final filteredPackages = selectedCategory == 'All' 
+                        ? packages 
+                        : packages.where((p) => p.category == selectedCategory).toList();
+
+                    if (filteredPackages.isEmpty) {
                       return const SliverFillRemaining(
                         child: Center(child: Text('No offers right now.')),
                       );
                     }
-                    return SliverPadding(
-                      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 100), // padding for bottom nav
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 24.0),
-                              child: PackageCard(package: packages[index]),
-                            );
-                          },
-                          childCount: packages.length,
+                    return SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 100), // padding for bottom nav
+                        child: SizedBox(
+                          height: 540, // Fixed height for horizontal cards
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            padding: const EdgeInsets.only(left: 24, right: 8),
+                            itemCount: filteredPackages.length,
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.only(right: 16.0),
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width * 0.85, // Width relative to screen
+                                  child: PackageCard(package: filteredPackages[index]),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     );
@@ -284,6 +317,8 @@ class PackageCard extends StatelessWidget {
                 // Description
                 Text(
                   package.description,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 15,
                     color: Color(0xFF4A4A4A),

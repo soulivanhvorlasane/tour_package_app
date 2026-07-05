@@ -13,6 +13,7 @@ class TourPackage {
   final String availabilityStatus;
   final String startDate;
   final String endDate;
+  final String category;
 
   TourPackage({
     required this.id,
@@ -26,6 +27,7 @@ class TourPackage {
     this.availabilityStatus = 'Available',
     this.startDate = '2026-07-12',
     this.endDate = '2026-07-29',
+    this.category = 'Other',
   });
 
   factory TourPackage.fromJson(Map<String, dynamic> json) {
@@ -83,6 +85,11 @@ class TourPackage {
             'https://picsum.photos/seed/gallery${id}d/400/400',
             'https://picsum.photos/seed/gallery${id}e/400/400',
           ],
+      category: json['category'] as String? ?? (
+          (json['name'] as String? ?? '').toLowerCase().contains('yacht') ? 'Yachts' :
+          (json['name'] as String? ?? '').toLowerCase().contains('jet') ? 'Jetskis' : 
+          'Beach Activities'
+      ),
     );
   }
 }
