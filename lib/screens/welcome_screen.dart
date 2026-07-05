@@ -137,8 +137,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   loading: () => const SliverFillRemaining(
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (error, stack) => SliverFillRemaining(
-                    child: Center(child: Text('Error: $error')),
+                  error: (error, stack) => const SliverFillRemaining(
+                    child: Center(
+                      child: Text(
+                        'Can not get data from API',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ],
