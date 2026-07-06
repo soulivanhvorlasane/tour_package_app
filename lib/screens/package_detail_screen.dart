@@ -4,6 +4,7 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../models/tour_package.dart';
 import '../providers/package_provider.dart';
+import '../providers/ui_state_providers.dart';
 import '../widgets/cover_image.dart';
 
 class PackageDetailScreen extends ConsumerStatefulWidget {
@@ -15,9 +16,6 @@ class PackageDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
-  int _selectedDateIndex = 0;
-  int _seats = 1;
-  int _currentCarouselIndex = 0;
   YoutubePlayerController? _youtubeController;
 
   @override
@@ -61,6 +59,9 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
 
     final detailAsyncValue = ref.watch(packageDetailProvider(widget.package.id));
     final displayPackage = detailAsyncValue.value ?? widget.package;
+    final selectedDateIndex = ref.watch(selectedDateIndexProvider);
+    final seats = ref.watch(seatsProvider);
+    final currentCarouselIndex = ref.watch(currentCarouselIndexProvider);
 
     // Handle Youtube Init if videoUrl is loaded later from the API
     if (_youtubeController == null && displayPackage.videoUrl != null && displayPackage.videoUrl!.isNotEmpty) {
@@ -69,7 +70,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
 
     // Removed cleanDescription as the description section is no longer in the UI
 
-    double totalPrice = displayPackage.price * _seats;
+    double totalPrice = displayPackage.price * seats;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -160,9 +161,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                             enableInfiniteScroll: true,
                             viewportFraction: 0.7,
                             onPageChanged: (index, reason) {
-                              setState(() {
-                                _currentCarouselIndex = index;
-                              });
+                              ref.read(currentCarouselIndexProvider.notifier).set(index);
                             },
                           ),
                           items: displayPackage.galleryImages.map((img) {
@@ -201,7 +200,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                                 margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: _currentCarouselIndex == entry.key ? 1.0 : 0.5),
+                                  color: Colors.white.withValues(alpha: currentCarouselIndex == entry.key ? 1.0 : 0.5),
                                   boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 2)],
                                 ),
                               );
@@ -246,13 +245,13 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                             int idx = entry.key;
                             var calendar = entry.value;
                             bool isAvailable = calendar.state == 'open' && calendar.remainingSeats > 0;
-                            bool isSelected = _selectedDateIndex == idx;
-                            return InkWell(
+                            bool isSelected = selectedDateIndex == idx;
+                            return GestureDetector(
                               onTap: isAvailable ? () {
-                                setState(() {
-                                  _selectedDateIndex = idx;
-                                  if (_seats > calendar.remainingSeats) _seats = calendar.remainingSeats;
-                                });
+                                ref.read(selectedDateIndexProvider.notifier).set(idx);
+                                if (ref.read(seatsProvider) > calendar.remainingSeats) {
+                                  ref.read(seatsProvider.notifier).set(calendar.remainingSeats);
+                                }
                               } : null,
                               child: Container(
                                 padding: const EdgeInsets.all(16),
@@ -321,7 +320,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                   const SizedBox(height: 16),
                   
                   // Seats Card
-                  if (displayPackage.calendars.isNotEmpty && _selectedDateIndex < displayPackage.calendars.length)
+                  if (displayPackage.calendars.isNotEmpty && selectedDateIndex < displayPackage.calendars.length)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
@@ -354,7 +353,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                                       Expanded(
                                         child: InkWell(
                                           onTap: () {
-                                            if (_seats > 1) setState(() => _seats--);
+                                            if (ref.read(seatsProvider) > 1) ref.read(seatsProvider.notifier).decrement();
                                           },
                                           child: const Center(child: Icon(Icons.remove, color: Colors.black, size: 28)),
                                         )
@@ -364,14 +363,14 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                                           decoration: BoxDecoration(
                                             border: Border.symmetric(vertical: BorderSide(color: Colors.grey.shade300))
                                           ),
-                                          child: Center(child: Text('$_seats', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)))
+                                          child: Center(child: Text('$seats', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)))
                                         ),
                                       ),
                                       Expanded(
                                         child: InkWell(
                                           onTap: () {
-                                            if (_seats < displayPackage.calendars[_selectedDateIndex].remainingSeats) {
-                                              setState(() => _seats++);
+                                            if (ref.read(seatsProvider) < displayPackage.calendars[selectedDateIndex].remainingSeats) {
+                                              ref.read(seatsProvider.notifier).increment();
                                             }
                                           },
                                           child: Container(
@@ -401,8 +400,8 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                Row(children: [const Icon(Icons.people, color: Color(0xFF1358C5), size: 16), const SizedBox(width: 4), Text('Booked: ${30 - displayPackage.calendars[_selectedDateIndex].remainingSeats}', style: const TextStyle(fontSize: 12, color: Color(0xFF1358C5), fontWeight: FontWeight.w700))]),
-                                Row(children: [const Icon(Icons.people, color: Color(0xFF2CA348), size: 16), const SizedBox(width: 4), Text('Remaining: ${displayPackage.calendars[_selectedDateIndex].remainingSeats}', style: const TextStyle(fontSize: 12, color: Color(0xFF2CA348), fontWeight: FontWeight.w700))]),
+                                Row(children: [const Icon(Icons.people, color: Color(0xFF1358C5), size: 16), const SizedBox(width: 4), Text('Booked: ${30 - displayPackage.calendars[selectedDateIndex].remainingSeats}', style: const TextStyle(fontSize: 12, color: Color(0xFF1358C5), fontWeight: FontWeight.w700))]),
+                                Row(children: [const Icon(Icons.people, color: Color(0xFF2CA348), size: 16), const SizedBox(width: 4), Text('Remaining: ${displayPackage.calendars[selectedDateIndex].remainingSeats}', style: const TextStyle(fontSize: 12, color: Color(0xFF2CA348), fontWeight: FontWeight.w700))]),
                                 const Row(children: [Icon(Icons.info, color: Colors.grey, size: 16), SizedBox(width: 4), Text('Total: 30', style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w700))]),
                               ],
                             ),
@@ -414,7 +413,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                   const SizedBox(height: 16),
                   
                   // Info Card
-                  if (displayPackage.calendars.isNotEmpty && _selectedDateIndex < displayPackage.calendars.length)
+                  if (displayPackage.calendars.isNotEmpty && selectedDateIndex < displayPackage.calendars.length)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
@@ -437,7 +436,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                             children: [
                               const Icon(Icons.calendar_today_outlined, size: 20, color: Colors.black54),
                               const SizedBox(width: 12),
-                              Text('Date:  ${displayPackage.calendars[_selectedDateIndex].dateStart} - ${displayPackage.calendars[_selectedDateIndex].dateEnd}', style: const TextStyle(fontSize: 14, color: Colors.black87)),
+                              Text('Date:  ${displayPackage.calendars[selectedDateIndex].dateStart} - ${displayPackage.calendars[selectedDateIndex].dateEnd}', style: const TextStyle(fontSize: 14, color: Colors.black87)),
                             ],
                           ),
                           const SizedBox(height: 12),

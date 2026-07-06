@@ -21,80 +21,177 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  void _handleLogin() async {
+    await ref.read(authProvider.notifier).login(
+      _emailController.text,
+      _passwordController.text,
+    );
+    
+    if (mounted) {
+      final status = ref.read(authProvider).status;
+      if (status == AuthStatus.authenticated) {
+        Navigator.pop(context); // Go back to Welcome Screen
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F6F8),
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text('Tour App Login'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(
-                Icons.travel_explore,
-                size: 80,
-                color: Colors.deepPurple,
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Gradient Header
+            Container(
+              height: MediaQuery.of(context).size.height * 0.35,
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFFF7B89), Color(0xFFFF9E7B)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
               ),
-              const SizedBox(height: 32),
-              CustomTextField(
-                controller: _emailController,
-                labelText: 'Email',
-                prefixIcon: Icons.email,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              CustomTextField(
-                controller: _passwordController,
-                labelText: 'Password',
-                prefixIcon: Icons.lock,
-                obscureText: true,
-              ),
-              const SizedBox(height: 24),
-              if (authState.status == AuthStatus.error)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(
-                    authState.errorMessage ?? 'Unknown error',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
-                    textAlign: TextAlign.center,
+              child: const SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.flight_takeoff, size: 80, color: Colors.white),
+                      SizedBox(height: 16),
+                      Text(
+                        'Welcome Back',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Login to continue your journey',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ElevatedButton(
-                onPressed: authState.status == AuthStatus.loading
-                    ? null
-                    : () {
-                        ref.read(authProvider.notifier).login(
-                              _emailController.text,
-                              _passwordController.text,
-                            );
-                      },
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                ),
-                child: authState.status == AuthStatus.loading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Login'),
               ),
-              if (authState.status == AuthStatus.authenticated)
-                const Padding(
-                  padding: EdgeInsets.only(top: 16.0),
-                  child: Text(
-                    'Login Successful!',
-                    style: TextStyle(color: Colors.green),
-                    textAlign: TextAlign.center,
-                  ),
+            ),
+            
+            // Login Card
+            Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(10),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-            ],
-          ),
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CustomTextField(
+                      controller: _emailController,
+                      labelText: 'Email Address',
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 20),
+                    CustomTextField(
+                      controller: _passwordController,
+                      labelText: 'Password',
+                      prefixIcon: Icons.lock_outline,
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {},
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Color(0xFFFF7B89)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (authState.status == AuthStatus.error)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 20.0),
+                        child: Text(
+                          authState.errorMessage ?? 'Unknown error',
+                          style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF7B89), Color(0xFFFF9E7B)],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ElevatedButton(
+                        onPressed: authState.status == AuthStatus.loading ? null : _handleLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          shadowColor: Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: authState.status == AuthStatus.loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Text('Login', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Don\'t have an account?', style: TextStyle(color: Colors.grey)),
+                        TextButton(
+                          onPressed: () {},
+                          child: const Text('Register', style: TextStyle(color: Color(0xFFFF7B89), fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
