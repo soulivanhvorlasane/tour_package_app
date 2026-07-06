@@ -109,16 +109,11 @@ class TourPackage {
       startDate: extractedStart,
       endDate: extractedEnd,
       videoUrl: json['video_url'] as String?,
-      galleryImages: (json['gallery'] as List<dynamic>?)
-              ?.map((e) => fixHost(e as String))
-              .toList() ??
-          [
-            'https://picsum.photos/seed/gallery${id}a/400/400',
-            'https://picsum.photos/seed/gallery${id}b/400/400',
-            'https://picsum.photos/seed/gallery${id}c/400/400',
-            'https://picsum.photos/seed/gallery${id}d/400/400',
-            'https://picsum.photos/seed/gallery${id}e/400/400',
-          ],
+      galleryImages: (json['gallery'] is List)
+          ? (json['gallery'] as List<dynamic>)
+              .map((e) => fixHost(e.toString()))
+              .toList()
+          : [],
       category: json['category'] as String? ?? (
           (json['name'] as String? ?? '').toLowerCase().contains('yacht') ? 'Yachts' :
           (json['name'] as String? ?? '').toLowerCase().contains('jet') ? 'Jetskis' : 
