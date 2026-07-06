@@ -320,7 +320,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                   const SizedBox(height: 16),
                   
                   // Seats Card
-                  if (displayPackage.calendars.isNotEmpty && selectedDateIndex < displayPackage.calendars.length)
+                  if (displayPackage.calendars.isNotEmpty && selectedDateIndex >= 0 && selectedDateIndex < displayPackage.calendars.length)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(
@@ -413,7 +413,7 @@ class _PackageDetailScreenState extends ConsumerState<PackageDetailScreen> {
                   const SizedBox(height: 16),
                   
                   // Info Card
-                  if (displayPackage.calendars.isNotEmpty && selectedDateIndex < displayPackage.calendars.length)
+                  if (displayPackage.calendars.isNotEmpty && selectedDateIndex >= 0 && selectedDateIndex < displayPackage.calendars.length)
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                       decoration: BoxDecoration(

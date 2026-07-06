@@ -48,10 +48,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
         elevation: 0,
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(bottom: Radius.circular(24))),
       ),
-      body: Stack(
-        children: [
-          SafeArea(
-            bottom: false,
+      body: SafeArea(
+        bottom: false,
             child: RefreshIndicator(
               onRefresh: () async {
                 ref.invalidate(packagesProvider);
@@ -215,41 +213,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                     child: Center(child: CircularProgressIndicator()),
                   ),
               ],
-            ),
-            ), // Closes RefreshIndicator
-          ), // Closes SafeArea
-          
-          // Floating Bottom Nav
-          Positioned(
-            bottom: 24,
-            left: 24,
-            right: 24,
-            child: Container(
-              height: 70,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(35),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withAlpha(15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  _buildNavItem(Icons.home, true),
-                  _buildNavItem(Icons.favorite_border, false),
-                  _buildNavItem(Icons.calendar_today_outlined, false),
-                  _buildUserNavItem(),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+            ), // Closes CustomScrollView
+          ), // Closes RefreshIndicator
+        ), // Closes SafeArea
     );
   }
 
@@ -284,154 +250,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isSelected) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFF222222) : Colors.transparent,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        color: isSelected ? Colors.white : Colors.grey.shade500,
-        size: 24,
-      ),
-    );
-  }
-
-  Widget _buildUserNavItem() {
-    final authState = ref.watch(authProvider);
-    final isLoggedIn = authState.status == AuthStatus.authenticated;
-    final userProfileAsync = ref.watch(userProfileProvider);
-
-    Widget userIcon = Icon(
-      Icons.person_outline,
-      color: isLoggedIn ? Colors.black : Colors.grey.shade500,
-      size: 24,
-    );
-
-    if (isLoggedIn) {
-      userProfileAsync.whenData((profile) {
-        if (profile != null && profile.profileImageProvider != null) {
-          userIcon = CircleAvatar(
-            radius: 12,
-            backgroundImage: profile.profileImageProvider,
-            backgroundColor: Colors.grey.shade200,
-          );
-        }
-      });
-    }
-
-    return GestureDetector(
-      onTap: () {
-        if (!isLoggedIn) {
-          _showLoginBottomSheet(context);
-        } else {
-          Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        color: Colors.transparent,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            userIcon,
-            if (!isLoggedIn)
-              const Text(
-                'login',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLoginBottomSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Welcome to Tour App',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFFF7B89), Color(0xFFFF9E7B)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
-                      shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Login', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    // ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Register page not implemented yet')));
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: Color(0xFFFF7B89), width: 1.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Register', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFF7B89))),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
     );
   }
 }
