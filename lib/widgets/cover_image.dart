@@ -29,9 +29,25 @@ class CoverImage extends ConsumerWidget {
         return Container(
           width: width,
           height: height,
-          color: Colors.grey.shade200,
+          color: Colors.grey.shade100,
           child: const Center(
-            child: Icon(Icons.image_not_supported, color: Colors.grey),
+            child: Icon(Icons.image_not_supported, color: Colors.grey, size: 40),
+          ),
+        );
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Container(
+          width: width,
+          height: height,
+          color: Colors.grey.shade50,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: const Color(0xFFFF7B89),
+              value: loadingProgress.expectedTotalBytes != null
+                  ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                  : null,
+            ),
           ),
         );
       },

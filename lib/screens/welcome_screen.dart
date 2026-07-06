@@ -26,12 +26,36 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F8),
+      appBar: AppBar(
+        title: const Text("Tour Packages", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 22)),
+        centerTitle: true,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFFF7B89), Color(0xFFFF9E7B)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+            borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(bottom: Radius.circular(24))),
+      ),
       body: Stack(
         children: [
           SafeArea(
             bottom: false,
-            child: CustomScrollView(
-              slivers: [
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(packagesProvider);
+                try {
+                  await ref.read(packagesProvider.future);
+                } catch (_) {}
+              },
+              child: CustomScrollView(
+                slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
@@ -131,46 +155,46 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                   ),
                 ),
                 
-                // Package List
-                packagesAsyncValue.when(
-                  data: (packages) {
-                    final filteredPackages = selectedCategory == 'All' 
-                        ? packages 
-                        : packages.where((p) => p.category == selectedCategory).toList();
+                if (packagesAsyncValue.hasValue)
+                  Builder(
+                    builder: (context) {
+                      final packages = packagesAsyncValue.value!;
+                      final filteredPackages = selectedCategory == 'All' 
+                          ? packages 
+                          : packages.where((p) => p.category == selectedCategory).toList();
 
-                    if (filteredPackages.isEmpty) {
-                      return const SliverFillRemaining(
-                        child: Center(child: Text('No offers right now.')),
-                      );
-                    }
-                    return SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(bottom: 100), // padding for bottom nav
-                        child: SizedBox(
-                          height: 540, // Fixed height for horizontal cards
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            padding: const EdgeInsets.only(left: 24, right: 8),
-                            itemCount: filteredPackages.length,
-                            itemBuilder: (context, index) {
-                              return Padding(
-                                padding: const EdgeInsets.only(right: 16.0),
-                                child: SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.85, // Width relative to screen
-                                  child: PackageCard(package: filteredPackages[index]),
-                                ),
-                              );
-                            },
+                      if (filteredPackages.isEmpty) {
+                        return const SliverFillRemaining(
+                          child: Center(child: Text('No offers right now.')),
+                        );
+                      }
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 100), // padding for bottom nav
+                          child: SizedBox(
+                            height: 540, // Fixed height for horizontal cards
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.only(left: 24, right: 8),
+                              itemCount: filteredPackages.length,
+                              itemBuilder: (context, index) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 16.0),
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width * 0.85, // Width relative to screen
+                                    child: PackageCard(package: filteredPackages[index]),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                  loading: () => const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (error, stack) => const SliverFillRemaining(
+                      );
+                    },
+                  )
+                else if (packagesAsyncValue.hasError)
+                  const SliverFillRemaining(
                     child: Center(
                       child: Text(
                         'Can not get data from API',
@@ -180,11 +204,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> {
                         ),
                       ),
                     ),
+                  )
+                else
+                  const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
                   ),
-                ),
               ],
             ),
-          ),
+            ), // Closes RefreshIndicator
+          ), // Closes SafeArea
           
           // Floating Bottom Nav
           Positioned(
@@ -340,18 +368,7 @@ class PackageCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 
-                // Dates Row
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_month, color: Color(0xFF9FA8DA), size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${package.startDate} - ${package.endDate}',
-                      style: const TextStyle(fontSize: 16, color: Color(0xFF2C3E50)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
+
                 
                 // Status Row
                 Row(

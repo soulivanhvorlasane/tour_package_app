@@ -1,11 +1,38 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
+class TourCalendar {
+  final int id;
+  final String dateStart;
+  final String dateEnd;
+  final String state;
+  final int remainingSeats;
+
+  TourCalendar({
+    required this.id,
+    required this.dateStart,
+    required this.dateEnd,
+    required this.state,
+    required this.remainingSeats,
+  });
+
+  factory TourCalendar.fromJson(Map<String, dynamic> json) {
+    return TourCalendar(
+      id: json['id'] as int? ?? 0,
+      dateStart: json['date_start'] as String? ?? '',
+      dateEnd: json['date_end'] as String? ?? '',
+      state: json['state'] as String? ?? 'open',
+      remainingSeats: json['remaining_seats'] as int? ?? 0,
+    );
+  }
+}
+
 class TourPackage {
   final int id;
   final String name;
   final String description;
   final double price;
+  final int duration;
   final String? imageUrl;
   final String country;
   final double rating;
@@ -15,12 +42,14 @@ class TourPackage {
   final String endDate;
   final String category;
   final String? videoUrl;
+  final List<TourCalendar> calendars;
 
   TourPackage({
     required this.id,
     required this.name,
     required this.description,
     required this.price,
+    this.duration = 7,
     this.imageUrl,
     this.country = 'Ipsum country',
     this.rating = 5.0,
@@ -30,6 +59,7 @@ class TourPackage {
     this.endDate = '2026-07-29',
     this.category = 'Other',
     this.videoUrl,
+    this.calendars = const [],
   });
 
   factory TourPackage.fromJson(Map<String, dynamic> json) {
@@ -71,6 +101,7 @@ class TourPackage {
       description: stripHtml(json['description'] as String? ?? 
           'Experience the ultimate relaxation with our Tropical Paradise Escape. Enjoy pristine beaches, luxury resorts, and crystal-clear waters.'),
       price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      duration: json['duration'] as int? ?? 7,
       imageUrl: mainImage,
       country: json['country'] as String? ?? 'Ipsum country',
       rating: (json['rating'] as num?)?.toDouble() ?? 5.0,
@@ -93,6 +124,10 @@ class TourPackage {
           (json['name'] as String? ?? '').toLowerCase().contains('jet') ? 'Jetskis' : 
           'Beach Activities'
       ),
+      calendars: (json['calendars'] as List<dynamic>?)
+              ?.map((e) => TourCalendar.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 }
